@@ -40,7 +40,7 @@ with col2:
 
 # --- AI Functionality ---
 load_dotenv()
-client = InferenceClient(token=os.getenv("HF_TOKEN"), model="mistralai/Mistral-7B-Instruct-v0.1")
+client = InferenceClient(token=os.getenv("HF_TOKEN"))  # ✅ CORRECTED: No model here
 
 def generate_script(idea):
     prompt = f"""
@@ -50,7 +50,11 @@ def generate_script(idea):
     2. SCRIPT (15-30 sec, high-end narrative)
     3. CAPTION (with luxury hashtags)
     """
-    return client.text_generation(prompt, max_new_tokens=300)
+    return client.text_generation(
+        prompt,
+        model="mistralai/Mistral-7B-Instruct-v0.1",  # ✅ CORRECTED: Model moved here
+        max_new_tokens=300
+    )
 
 # --- User Input ---
 idea = st.text_input("✨ Describe your premium content idea:", 
