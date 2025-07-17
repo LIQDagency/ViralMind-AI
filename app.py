@@ -40,7 +40,8 @@ with col2:
 
 # --- AI Functionality ---
 load_dotenv()
-client = InferenceClient(token=os.getenv("HF_TOKEN"))
+API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1"
+headers = {"Authorization": f"Bearer {os.getenv('HF_TOKEN')}"}
 
 def generate_script(idea):
     prompt = f"""
@@ -49,28 +50,26 @@ def generate_script(idea):
     1. HOOK (3 seconds, luxury tone)
     2. SCRIPT (15-30 sec, high-end narrative)
     3. CAPTION (with luxury hashtags)
+    Format the output with clear section headings.
     """
     
-    # Try multiple model endpoints
-    models_to_try = [
-        "mistralai/Mistral-7B-Instruct-v0.1",
-        "HuggingFaceH4/zephyr-7b-beta",
-        "google/gemma-7b-it"
-    ]
-    
-    for model in models_to_try:
-        try:
-            return client.text_generation(
-                prompt,
-                model=model,
-                max_new_tokens=300,
-                temperature=0.7
-            )
-        except Exception:
-            continue
-    
-    st.error("All models are currently unavailable. Please try again later.")
-    return ""
+    try:
+        response = requests.post(
+            API_URL,
+            headers=headers,
+            json={"inputs": prompt, "parameters": {"max_new_tokens": 300}}
+        )
+        result = response.json()
+        
+        if isinstance(result, list):
+            return result[0]['generated_text']
+        return result['generated_text']
+        
+    except Exception as e:
+        st.error(f"⚠️ Temporary API issue. Please refresh or try a different idea. (Error: {str(e)})")
+        return """💎 HOOK: "Experience luxury like never before..."
+📜 SCRIPT: "Our premium service delivers..."
+📝 CAPTION: "#LuxuryLiving #EliteExperience"""  # Fallback content
 
 # --- User Input ---
 idea = st.text_input("✨ Describe your premium content idea:", 
