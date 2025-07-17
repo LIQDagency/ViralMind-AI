@@ -40,7 +40,7 @@ with col2:
 
 # --- AI Functionality ---
 load_dotenv()
-client = InferenceClient(token=os.getenv("HF_TOKEN"))
+client = InferenceClient(token=os.getenv("HF_TOKEN"), model="mistralai/Mistral-7B-Instruct-v0.1")
 
 def generate_script(idea):
     prompt = f"""
