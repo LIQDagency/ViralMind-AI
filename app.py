@@ -50,15 +50,27 @@ def generate_script(idea):
     2. SCRIPT (15-30 sec, high-end narrative)
     3. CAPTION (with luxury hashtags)
     """
-    try:
-        return client.text_generation(
-            prompt,
-            model="mistralai/Mixtral-8x7B-Instruct-v0.1",  # Updated model
-            max_new_tokens=300
-        )
-    except Exception as e:
-        st.error(f"⚠️ Failed to generate content. Please try again. Error: {str(e)}")
-        return ""
+    
+    # Try multiple model endpoints
+    models_to_try = [
+        "mistralai/Mistral-7B-Instruct-v0.1",
+        "HuggingFaceH4/zephyr-7b-beta",
+        "google/gemma-7b-it"
+    ]
+    
+    for model in models_to_try:
+        try:
+            return client.text_generation(
+                prompt,
+                model=model,
+                max_new_tokens=300,
+                temperature=0.7
+            )
+        except Exception:
+            continue
+    
+    st.error("All models are currently unavailable. Please try again later.")
+    return ""
 
 # --- User Input ---
 idea = st.text_input("✨ Describe your premium content idea:", 
