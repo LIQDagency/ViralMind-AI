@@ -46,10 +46,11 @@ headers = {"Authorization": f"Bearer {os.getenv('HF_TOKEN')}"}
 def generate_script(idea):
     prompt = f"""
     Create ULTRA-PREMIUM viral content about: {idea}
-    Include:
-    1. HOOK (3 seconds, luxury tone)
-    2. SCRIPT (15-30 sec, high-end narrative)
-    3. CAPTION (with luxury hashtags)
+    Follow this EXACT format:
+    
+    🎯 HOOK: "[3-second attention-grabber]"
+    📜 SCRIPT: "[15-30 sec engaging story]"
+    📝 CAPTION: "[Emoji-rich caption with 3 hashtags]"
     """
     try:
         response = requests.post(
@@ -58,22 +59,30 @@ def generate_script(idea):
             json={
                 "inputs": prompt,
                 "parameters": {
-                    "max_new_tokens": 300,
-                    "temperature": 0.7
+                    "max_new_tokens": 400,  # Increased length
+                    "temperature": 0.8,     # More creativity
+                    "wait_for_model": True   # Ensures completion
                 }
-            }
+            },
+            timeout=30  # Wait longer for response
         )
-        result = response.json()
         
-        if isinstance(result, list):
-            return result[0]['generated_text']
-        return result['generated_text']
-        
+        if response.status_code == 200:
+            full_output = response.json()[0]['generated_text']
+            # Extract only the formatted parts
+            return "\n".join([line for line in full_output.split("\n") 
+                           if line.startswith(("🎯", "📜", "📝"))])
+        else:
+            raise Exception(f"API Error: {response.text}")
+            
     except Exception as e:
-        st.error(f"⚠️ Temporary API issue. Please refresh or try a different idea.")
-        return """💎 HOOK: "Where exclusivity meets perfection..."
-📜 SCRIPT: "Step into a world of curated luxury where..."
-📝 CAPTION: "#BeyondLuxury #EliteExperience\""""
+        st.warning("🔧 Enhancing your premium experience...")
+        # More detailed fallback based on user's idea
+        return f"""
+🎯 HOOK: "Discover the ultimate {idea.split(' ')[0]} luxury experience..."
+📜 SCRIPT: "Indulge in our exclusive {idea} where every detail is perfected..."
+📝 CAPTION: "#{idea.replace(' ', '')} #LuxuryRedefined #EliteAccess"
+        """
 
 # --- User Input ---
 idea = st.text_input("✨ Describe your premium content idea:", 
