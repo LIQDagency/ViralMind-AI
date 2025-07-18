@@ -2,7 +2,6 @@ import os
 import requests
 import streamlit as st
 from dotenv import load_dotenv
-from huggingface_hub import InferenceClient
 
 # --- Luxury UI Setup ---
 st.set_page_config(
@@ -51,14 +50,18 @@ def generate_script(idea):
     1. HOOK (3 seconds, luxury tone)
     2. SCRIPT (15-30 sec, high-end narrative)
     3. CAPTION (with luxury hashtags)
-    Format the output with clear section headings.
     """
-    
     try:
         response = requests.post(
             API_URL,
             headers=headers,
-            json={"inputs": prompt, "parameters": {"max_new_tokens": 300}}
+            json={
+                "inputs": prompt,
+                "parameters": {
+                    "max_new_tokens": 300,
+                    "temperature": 0.7
+                }
+            }
         )
         result = response.json()
         
@@ -67,10 +70,10 @@ def generate_script(idea):
         return result['generated_text']
         
     except Exception as e:
-        st.error(f"⚠️ Temporary API issue. Please refresh or try a different idea. (Error: {str(e)})")
-        return """💎 HOOK: "Experience luxury like never before..."
-📜 SCRIPT: "Our premium service delivers..."
-📝 CAPTION: "#LuxuryLiving #EliteExperience"""  # Fallback content
+        st.error(f"⚠️ Temporary API issue. Please refresh or try a different idea.")
+        return """💎 HOOK: "Where exclusivity meets perfection..."
+📜 SCRIPT: "Step into a world of curated luxury where..."
+📝 CAPTION: "#BeyondLuxury #EliteExperience\""""
 
 # --- User Input ---
 idea = st.text_input("✨ Describe your premium content idea:", 
