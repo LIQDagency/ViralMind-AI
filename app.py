@@ -40,22 +40,26 @@ with col2:
 
 # --- AI Functionality ---
 load_dotenv()
-API_URL = "https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1"  # More powerful model
+API_URL = "https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1"
 headers = {"Authorization": f"Bearer {os.getenv('HF_TOKEN')}"}
 
 def generate_script(idea):
-    # Premium prompt engineering
-    prompt = f"""Create a VIRAL social media script about: {idea}
+    # Premium prompt template
+    prompt = f"""Create a viral social media script about: {idea}
     
-    REQUIREMENTS:
-    1. HOOK (3-5 seconds): Must include [PAUSE] markers for editing
-    2. SCRIPT (30-60 sec): Minimum 5 sentences with dramatic pacing
-    3. CAPTION: 3 luxury hashtags + 1 CTA
+    FORMAT REQUIREMENTS:
+    🎯 HOOK: [3-5 second attention-grabber with 2 PAUSE points]
+    📜 SCRIPT: [30-60 second script with 5 key points]
+    📝 CAPTION: [3 relevant hashtags + 1 CTA]
     
-    EXAMPLE FORMAT:
-    🎯 HOOK: "What if I told you... [PAUSE] This changes everything! [PAUSE]"
-    📜 SCRIPT: "First we... [beat] Then... [beat] The secret is..."
-    📝 CAPTION: "Tag someone who needs this 👑 #LuxuryLife #GameChanger #Premium (Link in bio!)"
+    EXAMPLE:
+    🎯 HOOK: "You're doing it wrong! [PAUSE] Here's the luxury secret... [PAUSE]"
+    📜 SCRIPT: "1. Start with... [beat] 
+    2. Then add... [beat]
+    3. The magic happens when... [beat]
+    4. Most influencers miss... [beat]
+    5. But you'll..."
+    📝 CAPTION: "Who needs this? 👇 #{idea.replace(' ','')} #LuxuryHacks #ViralTips (Link in bio!)"
     """
     
     try:
@@ -65,69 +69,56 @@ def generate_script(idea):
             json={
                 "inputs": prompt,
                 "parameters": {
-                    "max_new_tokens": 500,
-                    "temperature": 0.85,
+                    "max_new_tokens": 600,
+                    "temperature": 0.9,
                     "do_sample": True,
                     "wait_for_model": True
                 }
             },
-            timeout=45
+            timeout=60
         )
         
         if response.status_code == 200:
-            full_output = response.json()[0]['generated_text']
+            result = response.json()[0]['generated_text']
             # Extract only the formatted parts
-            formatted = []
-            for line in full_output.split("\n"):
-                if line.startswith(("🎯", "📜", "📝")):
-                    formatted.append(line)
-                elif "HOOK:" in line or "SCRIPT:" in line or "CAPTION:" in line:
-                    formatted.append(line)
-            
-            return "\n\n".join(formatted) if formatted else create_fallback(idea)
+            return "\n\n".join([line for line in result.split("\n") 
+                             if any(marker in line for marker in ["🎯", "📜", "📝", "HOOK:", "SCRIPT:", "CAPTION:"])])
         else:
-            raise Exception(f"API Error: {response.text}")
+            raise Exception(response.text)
             
-    except Exception:
-        return create_fallback(idea)
+    except Exception as e:
+        st.toast("⚠️ Using premium fallback content", icon="✨")
+        return f"""
+🎯 HOOK: "This {idea.split()[0]} method went viral... [PAUSE] Here's why! [PAUSE]"
 
-def create_fallback(idea):
-    """Premium fallback content with proper structure"""
-    topic = idea.split()[0] if idea else "luxury"
-    return f"""
-🎯 HOOK: "Stop scrolling! [PAUSE] This {topic} secret went viral... [PAUSE]"
+📜 SCRIPT: "1. The breakthrough... [beat]
+2. Industry secrets... [beat]
+3. Why this works... [beat]
+4. Common mistakes... [beat]
+5. Your advantage... [beat]"
 
-📜 SCRIPT: "Here's why this works: [beat]\n1. First...\n2. Then...\n3. The key is...\n4. Most people miss...\n5. But you... [beat]"
+📝 CAPTION: "Tag someone who needs this! #{idea.replace(' ','')} #ContentGold #TrendingNow (DM for details 👑)"
+        """
 
-📝 CAPTION: "Would you try this? 👇 #Viral{topic.capitalize()} #ContentGold #TrendingNow (DM for details!)"
-    """
+# --- User Input (WITH UNIQUE KEY) ---
+idea = st.text_input(
+    "✨ Describe your premium content idea:",
+    placeholder="e.g., 'Rolex watch unboxing experience'",
+    key="main_input"  # 👈 Unique key fix
+)
 
-# --- User Input ---
-idea = st.text_input("✨ Describe your premium content idea:", 
-                    placeholder="e.g., 'Rolex watch unboxing experience'")
-
-if st.button("Generate Viral Script", type="primary"):
+if st.button("Generate Viral Script", type="primary", key="main_button"):
     with st.spinner("🧠 Engineering virality..."):
         script = generate_script(idea)
         
         # Display with premium formatting
         st.success("🔥 Your Luxury Viral Blueprint:")
-        st.markdown(f"```\n{script}\n```")  # Monospace for clarity
+        st.code(script, language="markdown")
         
-        # Add download button
+        # Download button
         st.download_button(
-            label="📥 Download Script",
-            data=script,
-            file_name="viral_script.txt",
+            "📥 Download Script",
+            script,
+            file_name=f"viral_script_{idea[:20]}.txt",
             mime="text/plain"
         )
-
-# --- User Input ---
-idea = st.text_input("✨ Describe your premium content idea:", 
-                    placeholder="e.g., 'Rolex watch unboxing experience'")
-
-if st.button("Generate Viral Script", type="primary"):
-    with st.spinner("Crafting luxury content..."):
-        script = generate_script(idea)
-        st.success("Here's your luxury viral script:")
-        st.write(script)
