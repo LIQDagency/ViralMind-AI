@@ -44,22 +44,22 @@ API_URL = "https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-In
 headers = {"Authorization": f"Bearer {os.getenv('HF_TOKEN')}"}
 
 def generate_script(idea):
-    # Premium prompt template
-    prompt = f"""Create a viral social media script about: {idea}
+    # Premium prompt engineering
+    prompt = f"""Create a VIRAL 60-second social media script about: {idea}
     
-    FORMAT REQUIREMENTS:
-    🎯 HOOK: [3-5 second attention-grabber with 2 PAUSE points]
-    📜 SCRIPT: [30-60 second script with 5 key points]
-    📝 CAPTION: [3 relevant hashtags + 1 CTA]
+    REQUIREMENTS:
+    1. HOOK (3-5 sec): Must include [PAUSE] markers and be shocking/curiosity-driven
+    2. SCRIPT (5 key points): Each point separated by [beat] with concrete examples
+    3. CAPTION: 3 custom hashtags + 1 CTA
     
-    EXAMPLE:
-    🎯 HOOK: "You're doing it wrong! [PAUSE] Here's the luxury secret... [PAUSE]"
-    📜 SCRIPT: "1. Start with... [beat] 
-    2. Then add... [beat]
-    3. The magic happens when... [beat]
-    4. Most influencers miss... [beat]
-    5. But you'll..."
-    📝 CAPTION: "Who needs this? 👇 #{idea.replace(' ','')} #LuxuryHacks #ViralTips (Link in bio!)"
+    EXAMPLE FOR "Luxury Cars":
+    🎯 HOOK: "You're photographing cars wrong! [PAUSE] This $0 trick went viral... [PAUSE]"
+    📜 SCRIPT: "1. Find the golden hour light [beat] 
+    2. Use a polarizer for reflections [beat]
+    3. Shoot from 3/4 angles [beat]
+    4. Edit ONLY these settings [beat]
+    5. The dealership secret nobody shares"
+    📝 CAPTION: "Which car needs this? 👇 #LuxuryCarPhotography #ProShots #CarGram (Free guide 🔗)"
     """
     
     try:
@@ -69,9 +69,9 @@ def generate_script(idea):
             json={
                 "inputs": prompt,
                 "parameters": {
-                    "max_new_tokens": 600,
-                    "temperature": 0.9,
-                    "do_sample": True,
+                    "max_new_tokens": 650,
+                    "temperature": 0.85,
+                    "repetition_penalty": 1.2,
                     "wait_for_model": True
                 }
             },
@@ -80,25 +80,57 @@ def generate_script(idea):
         
         if response.status_code == 200:
             result = response.json()[0]['generated_text']
-            # Extract only the formatted parts
-            return "\n\n".join([line for line in result.split("\n") 
-                             if any(marker in line for marker in ["🎯", "📜", "📝", "HOOK:", "SCRIPT:", "CAPTION:"])])
+            
+            # Enforce minimum quality standards
+            if all(marker in result for marker in ["🎯", "📜", "📝"]):
+                return result
+            else:
+                raise Exception("Incomplete response format")
         else:
-            raise Exception(response.text)
+            raise Exception(f"API Error: {response.text}")
             
     except Exception as e:
-        st.toast("⚠️ Using premium fallback content", icon="✨")
-        return f"""
-🎯 HOOK: "This {idea.split()[0]} method went viral... [PAUSE] Here's why! [PAUSE]"
+        st.toast("✨ Using enhanced premium template", icon="💎")
+        return create_dynamic_fallback(idea)
 
-📜 SCRIPT: "1. The breakthrough... [beat]
-2. Industry secrets... [beat]
-3. Why this works... [beat]
-4. Common mistakes... [beat]
-5. Your advantage... [beat]"
+def create_dynamic_fallback(idea):
+    """Generates high-quality fallback content"""
+    topic = idea.split()[0] if idea else "luxury"
+    return f"""
+🎯 HOOK: "Most {topic} content fails because... [PAUSE] Until now! [PAUSE]"
 
-📝 CAPTION: "Tag someone who needs this! #{idea.replace(' ','')} #ContentGold #TrendingNow (DM for details 👑)"
-        """
+📜 SCRIPT: "1. The {topic} breakthrough... [beat]
+2. Industry secrets exposed... [beat]
+3. Why this works today... [beat]
+4. Common mistakes to avoid... [beat]
+5. Your unfair advantage... [beat]"
+
+📝 CAPTION: "Who needs this? 👇 #{topic}Secrets #Viral{topic.capitalize()} #TrendingNow (DM 'GUIDE' 📩)"
+    """
+
+# --- User Input ---
+idea = st.text_input(
+    "✨ Describe your viral content idea:",
+    placeholder="e.g., 'Luxury watch photography tricks'",
+    key="unique_input_key"
+)
+
+if st.button("Generate Viral Script", type="primary", key="unique_button_key"):
+    with st.spinner("🔮 Engineering virality..."):
+        script = generate_script(idea)
+        
+        # Premium display
+        st.success("💎 Your Viral Masterpiece:")
+        st.markdown("""
+        <div style="
+            background: #1E1E2D;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #FFD700;
+            font-family: monospace;
+            white-space: pre-wrap;
+        ">{}</div>
+        """.format(script), unsafe_allow_html=True)
 
 # --- User Input (WITH UNIQUE KEY) ---
 idea = st.text_input(
